@@ -36,36 +36,37 @@ CAN_LOCAL_IP_IN_PASSWORD=$(jq -r '.CAN_local_ip_in_password' "$SECRET_FILE")
 OTTAWA_OUTBOUND_PASSWORD=$(jq -r '.ottawa_outbound_password' "$SECRET_FILE")
 JMS_LAX_OUT_PASSWORD=$(jq -r '.jms_lax_out_password' "$SECRET_FILE") # Assuming same password for all jms_lax_out servers
 
-# Check if passwords were read successfully (basic check)
+# Check if passwords were read successfully (basic check for non-empty)
 if [ -z "$CLIENT_CAN_LAX_PASSWORD" ] || [ -z "$FAMILY_CAN_LAX_HKG_PASSWORD" ] || [ -z "$CAN_LOCAL_IP_IN_PASSWORD" ] || [ -z "$OTTAWA_OUTBOUND_PASSWORD" ] || [ -z "$JMS_LAX_OUT_PASSWORD" ]; then
-    echo "Error: Could not read all passwords from ${SECRET_FILE}. Please check the file content and jq paths in the script."
-    exit 1
+    echo "Warning: One or more passwords read from ${SECRET_FILE} are empty. Please check the file content and jq paths."
+    # Decide if you want to exit here or continue with empty passwords
+    # exit 1
 fi
-
 
 echo "### Injecting passwords into temporary config file ###"
 # Use jq to inject passwords into the config.json and save to a temporary file
-jq \
-  --arg client_pass "$CLIENT_CAN_LAX_PASSWORD" \
-  --arg family_hkg_pass "$FAMILY_CAN_LAX_HKG_PASSWORD" \
-  --arg family_lax_pass "$FAMILY_CAN_LAX_PASSWORD" \
-  --arg can_local_pass "$CAN_LOCAL_IP_IN_PASSWORD" \
-  --arg ottawa_pass "$OTTAWA_OUTBOUND_PASSWORD" \
-  --arg jms_pass "$JMS_LAX_OUT_PASSWORD" \
-  '.inboundDetour[] |=
+# Using --arg and separate filter parts to avoid quoting issues
+jq --arg client_pass "$CLIENT_CAN_LAX_PASSWORD" \
+   --arg family_hkg_pass "$FAMILY_CAN_LAX_HKG_PASSWORD" \
+   --arg family_lax_pass "$FAMILY_CAN_LAX_PASSWORD" \
+   --arg can_local_pass "$CAN_LOCAL_IP_IN_PASSWORD" \
+   --arg ottawa_pass "$OTTAWA_OUTBOUND_PASSWORD" \
+   --arg jms_pass "$JMS_LAX_OUT_PASSWORD" \
+   '.inboundDetour |= map(
      if .tag == "client_can_lax" then .settings.password = $client_pass
      elif .tag == "family_can_lax_hkg" then .settings.password = $family_hkg_pass
      elif .tag == "family_can_lax" then .settings.password = $family_lax_pass
      elif .tag == "CAN_local_ip_in" then .settings.password = $can_local_pass
      else . end
-   | .outbounds[] |=
+   ) | .outbounds |= map(
      if .tag == "hk" then .settings.servers[0].password = $ottawa_pass
-     elif .tag == "jms_lax_out" then (.settings.servers[] |= .password = $jms_pass) # Apply to all servers in jms_lax_out
-     else . end' "$CONFIG_PATH" > "$TEMP_CONFIG_PATH"
+     elif .tag == "jms_lax_out" then (.settings.servers[] |= .password = $jms_pass)
+     else . end
+   )' "$CONFIG_PATH" > "$TEMP_CONFIG_PATH"
 
 # Check if the temporary config file was created successfully
 if [ ! -f "$TEMP_CONFIG_PATH" ]; then
-    echo "Error: Failed to create temporary config file with injected passwords."
+    echo "Error: Failed to create temporary config file with injected passwords. Check jq command and config.json structure."
     exit 1
 fi
 
