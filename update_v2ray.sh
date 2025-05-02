@@ -6,6 +6,7 @@ IMAGE_NAME="v2fly/v2fly-core"
 # Adjust this path if your config.json is not in the same directory as the script
 CONFIG_PATH="./config.json"
 TEMP_CONFIG_PATH="./config.json.tmp" # Create a temporary file for injecting secrets
+TEMP_FILTER_FILE="./jq_filter.tmp" # Temporary file for the jq filter
 # Adjust this path to where you store your secrets.json file
 SECRET_FILE="./secrets.json"
 # Include -format jsonv5 here if your config.json is in V5 format
@@ -43,31 +44,43 @@ if [ -z "$CLIENT_CAN_LAX_PASSWORD" ] || [ -z "$FAMILY_CAN_LAX_HKG_PASSWORD" ] ||
     # exit 1
 fi
 
-echo "### Injecting passwords into temporary config file ###"
-# Use jq with a here-document to inject passwords
+echo "### Creating temporary jq filter file ###"
+# Write the jq filter to a temporary file
+cat <<'EOF' > "$TEMP_FILTER_FILE"
+.inboundDetour |= map(
+  if .tag == "client_can_lax" then .settings.password = $client_pass
+  elif .tag == "family_can_lax_hkg" then .settings.password = $family_hkg_pass
+  elif .tag == "family_can_lax" then .settings.password = $family_lax_pass
+  elif .tag == "CAN_local_ip_in" then .settings.password = $can_local_pass
+  else . end
+) | .outbounds |= map(
+  if .tag == "hk" then .settings.servers[0].password = $ottawa_pass
+  elif .tag == "jms_lax_out" then (.settings.servers[] |= .password = $jms_pass)
+  else . end
+)
+EOF
+
+# Check if the temporary filter file was created successfully
+if [ ! -f "$TEMP_FILTER_FILE" ]; then
+    echo "Error: Failed to create temporary jq filter file."
+    exit 1
+fi
+
+echo "### Injecting passwords into temporary config file using jq filter file ###"
+# Use jq with the temporary filter file to inject passwords
 jq --arg client_pass "$CLIENT_CAN_LAX_PASSWORD" \
    --arg family_hkg_pass "$FAMILY_CAN_LAX_HKG_PASSWORD" \
    --arg family_lax_pass "$FAMILY_CAN_LAX_PASSWORD" \
    --arg can_local_pass "$CAN_LOCAL_IP_IN_PASSWORD" \
    --arg ottawa_pass "$OTTAWA_OUTBOUND_PASSWORD" \
    --arg jms_pass "$JMS_LAX_OUT_PASSWORD" \
-   -f - "$CONFIG_PATH" > "$TEMP_CONFIG_PATH" <<EOF
-.inboundDetour |= map(
-  if .tag == "client_can_lax" then .settings.password = \$client_pass
-  elif .tag == "family_can_lax_hkg" then .settings.password = \$family_hkg_pass
-  elif .tag == "family_can_lax" then .settings.password = \$family_lax_pass
-  elif .tag == "CAN_local_ip_in" then .settings.password = \$can_local_pass
-  else . end
-) | .outbounds |= map(
-  if .tag == "hk" then .settings.servers[0].password = \$ottawa_pass
-  elif .tag == "jms_lax_out" then (.settings.servers[] |= .password = \$jms_pass)
-  else . end
-)
-EOF
+   -f "$TEMP_FILTER_FILE" "$CONFIG_PATH" > "$TEMP_CONFIG_PATH"
 
 # Check if the temporary config file was created successfully
 if [ ! -f "$TEMP_CONFIG_PATH" ]; then
     echo "Error: Failed to create temporary config file with injected passwords. Check jq command, config.json structure, and secrets.json content."
+    # Clean up temporary filter file before exiting
+    rm "$TEMP_FILTER_FILE"
     exit 1
 fi
 
@@ -103,9 +116,9 @@ docker run -d \
   -p 3396:3396 \
   ${IMAGE_NAME} ${V2RAY_RUN_ARGS}
 
-# Clean up the temporary config file after starting the container
-echo "### Cleaning up temporary config file ###"
-rm "$TEMP_CONFIG_PATH"
+# Clean up the temporary files after starting the container
+echo "### Cleaning up temporary config and filter files ###"
+rm "$TEMP_CONFIG_PATH" "$TEMP_FILTER_FILE"
 
 echo "### Script finished ###"
 echo "Check container status with: docker ps"
