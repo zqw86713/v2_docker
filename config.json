@@ -1,6 +1,5 @@
 {
-    "inbounds": [],
-    "inboundDetour": [
+    "inbounds": [
         {
             "port": 1081,
             "listen": "127.0.0.1",
@@ -107,7 +106,6 @@
             "tag": "direct"
         }
     ],
-    "outboundDetour": [],
     "routing": {
         "strategy": "rules",
         "settings": {
