@@ -17,18 +17,6 @@ Open the script in a text editor and adjust the following variables at the begin
 * `CONFIG_PATH`: **Crucially, set this to the absolute or relative path on your *host machine* where your `config.json` file is located.** The script mounts this file into the container at `/etc/v2ray/config.json`.
 * `V2RAY_RUN_ARGS`: Additional arguments passed to the `v2ray run` command inside the container. The script defaults to `run -c /etc/v2ray/config.json`. **If your `config.json` is in V5 format, you should change this to `run -format jsonv5 -c /etc/v2ray/config.json`**.
 
-**Important Port Mappings:**
-
-The `docker run` command includes several `-p HostPort:ContainerPort` flags. These map ports from your host machine to ports inside the Docker container. **You MUST adjust these port mappings (`-p ...`) to match the ports you have configured within your `config.json` file.**
-
-The default mappings in the script are examples:
-* `-p 1081:1081`
-* `-p 3389:3389`
-* `-p 3500:3500`
-* `-p 3501:3501`
-* `-p 3396:3396`
-
-Remove, add, or modify these lines as needed to match your V2Ray configuration.
 
 ## Usage
 
