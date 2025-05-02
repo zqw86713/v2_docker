@@ -4,7 +4,7 @@
 CONTAINER_NAME="v2ray"
 IMAGE_NAME="v2fly/v2fly-core"
 # Adjust this path if your config.json.template is not in the current directory
-CONFIG_TEMPLATE_PATH="./config.json.template"
+CONFIG_TEMPLATE_PATH="./config.json"
 # Path for the final config file that V2Ray will use inside the container
 FINAL_CONFIG_PATH="./config.json" # This file will be generated
 # Include -format jsonv5 here if your config.json is in V5 format
