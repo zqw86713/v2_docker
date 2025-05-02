@@ -7,9 +7,7 @@
             "tag": "socks_in",
             "settings": {
                 "auth": "noauth",
-                "udp": true,
-                "ip": "127.0.0.1",
-                "userLevel": 0
+                "udp": true
             }
         },
         {
