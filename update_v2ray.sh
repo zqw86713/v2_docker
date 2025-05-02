@@ -44,29 +44,30 @@ if [ -z "$CLIENT_CAN_LAX_PASSWORD" ] || [ -z "$FAMILY_CAN_LAX_HKG_PASSWORD" ] ||
 fi
 
 echo "### Injecting passwords into temporary config file ###"
-# Use jq to inject passwords into the config.json and save to a temporary file
-# Using --arg and separate filter parts to avoid quoting issues
+# Use jq with a here-document to inject passwords
 jq --arg client_pass "$CLIENT_CAN_LAX_PASSWORD" \
    --arg family_hkg_pass "$FAMILY_CAN_LAX_HKG_PASSWORD" \
    --arg family_lax_pass "$FAMILY_CAN_LAX_PASSWORD" \
    --arg can_local_pass "$CAN_LOCAL_IP_IN_PASSWORD" \
    --arg ottawa_pass "$OTTAWA_OUTBOUND_PASSWORD" \
    --arg jms_pass "$JMS_LAX_OUT_PASSWORD" \
-   '.inboundDetour |= map(
-     if .tag == "client_can_lax" then .settings.password = $client_pass
-     elif .tag == "family_can_lax_hkg" then .settings.password = $family_hkg_pass
-     elif .tag == "family_can_lax" then .settings.password = $family_lax_pass
-     elif .tag == "CAN_local_ip_in" then .settings.password = $can_local_pass
-     else . end
-   ) | .outbounds |= map(
-     if .tag == "hk" then .settings.servers[0].password = $ottawa_pass
-     elif .tag == "jms_lax_out" then (.settings.servers[] |= .password = $jms_pass)
-     else . end
-   )' "$CONFIG_PATH" > "$TEMP_CONFIG_PATH"
+   -f - "$CONFIG_PATH" > "$TEMP_CONFIG_PATH" <<EOF
+.inboundDetour |= map(
+  if .tag == "client_can_lax" then .settings.password = \$client_pass
+  elif .tag == "family_can_lax_hkg" then .settings.password = \$family_hkg_pass
+  elif .tag == "family_can_lax" then .settings.password = \$family_lax_pass
+  elif .tag == "CAN_local_ip_in" then .settings.password = \$can_local_pass
+  else . end
+) | .outbounds |= map(
+  if .tag == "hk" then .settings.servers[0].password = \$ottawa_pass
+  elif .tag == "jms_lax_out" then (.settings.servers[] |= .password = \$jms_pass)
+  else . end
+)
+EOF
 
 # Check if the temporary config file was created successfully
 if [ ! -f "$TEMP_CONFIG_PATH" ]; then
-    echo "Error: Failed to create temporary config file with injected passwords. Check jq command and config.json structure."
+    echo "Error: Failed to create temporary config file with injected passwords. Check jq command, config.json structure, and secrets.json content."
     exit 1
 fi
 
