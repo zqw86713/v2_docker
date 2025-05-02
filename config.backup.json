@@ -1,5 +1,6 @@
 {
-    "inbounds": [
+    "inbounds": [],
+    "inboundDetour": [
         {
             "port": 1081,
             "listen": "127.0.0.1",
