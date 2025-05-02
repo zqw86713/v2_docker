@@ -1,20 +1,19 @@
 {
     "inbounds": [
-      {
-        "port": 1081,
-        "listen": "127.0.0.1",
-        "protocol": "socks",
-        "settings": {
-          "auth": "noauth",
-          "udp": true
+        {
+            "port": 1081,
+            "listen": "127.0.0.1",
+            "protocol": "socks",
+            "settings": {
+                "auth": "noauth",
+                "udp": true
+            }
         }
-      }
     ],
     "outbounds": [
-      {
-        "protocol": "freedom",
-        "settings": {}
-      }
+        {
+            "protocol": "freedom",
+            "settings": {}
+        }
     ]
-  }
-  
+}
