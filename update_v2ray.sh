@@ -34,12 +34,8 @@ echo "### Creating and starting a new container ${CONTAINER_NAME} ###"
 # Make sure the port mappings (-p ...) match your config.json
 docker run -d \
   --name ${CONTAINER_NAME} \
+  --network host \
   -v ${CONFIG_PATH}:/etc/v2ray/config.json \
-  -p 1081:1081 \
-  -p 3389:3389 \
-  -p 3500:3500 \
-  -p 3501:3501 \
-  -p 3396:3396 \
   ${IMAGE_NAME} ${V2RAY_RUN_ARGS}
 
 echo "### Script finished ###"
