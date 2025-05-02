@@ -23,7 +23,7 @@
             "settings": {
                 "method": "aes-256-gcm",
                 "ota": true,
-                "password": "M34bCeR@mD"
+                "password": "__ENV_PASSWORD_CLIENT_CAN_LAX__"
             }
         },
         {
@@ -33,7 +33,7 @@
             "settings": {
                 "method": "aes-256-gcm",
                 "ota": true,
-                "password": "E3JXWg4SfZ"
+                "password": "__ENV_PASSWORD_FAMILY_CAN_LAX_HKG__"
             }
         },
         {
@@ -43,7 +43,7 @@
             "settings": {
                 "method": "aes-256-gcm",
                 "ota": true,
-                "password": "E3JXWg4SfZ"
+                "password": "__ENV_PASSWORD_FAMILY_CAN_LAX__"
             }
         },
         {
@@ -53,7 +53,7 @@
             "settings": {
                 "method": "aes-256-gcm",
                 "ota": true,
-                "password": "E3JXWg4SfZ"
+                "password": "__ENV_PASSWORD_CAN_LOCAL_IP_IN__"
             }
         }
     ],
@@ -66,7 +66,7 @@
                         "address": "141.11.149.179",
                         "method": "aes-256-gcm",
                         "ota": false,
-                        "password": "Ottawa2024",
+                        "password": "__ENV_PASSWORD_HK_OUTBOUND__",
                         "port": 8388
                     }
                 ]
@@ -86,7 +86,7 @@
                         "address": "c44s1.portablesubmarines.com",
                         "port": 10931,
                         "method": "aes-256-gcm",
-                        "password": "nyE52cj6BN2XRsQL",
+                        "password": "__ENV_PASSWORD_JMS_LAX_OUT_1__",
                         "ota": false,
                         "level": 0
                     },
@@ -95,7 +95,7 @@
                         "address": "c44s2.portablesubmarines.com",
                         "port": 10931,
                         "method": "aes-256-gcm",
-                        "password": "nyE52cj6BN2XRsQL",
+                        "password": "__ENV_PASSWORD_JMS_LAX_OUT_2__",
                         "ota": false,
                         "level": 0
                     }
