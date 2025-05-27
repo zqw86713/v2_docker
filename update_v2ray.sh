@@ -20,31 +20,32 @@ docker pull ${IMAGE_NAME}
 
 # Check if the container exists
 if docker inspect ${CONTAINER_NAME} &>/dev/null; then
-  echo "### Stopping existing container ${CONTAINER_NAME} ###"
-  # Stop the existing container
-  docker stop ${CONTAINER_NAME}
+  echo "### Container ${CONTAINER_NAME} exists. Checking status and potentially recreating. ###"
+  # Stop the existing container if it's running
+  if docker ps -q -f name=${CONTAINER_NAME} | grep -q .; then
+    echo "### Stopping running container ${CONTAINER_NAME} ###"
+    docker stop ${CONTAINER_NAME}
+  fi
 
   echo "### Removing existing container ${CONTAINER_NAME} ###"
   # Remove the existing container
   docker rm ${CONTAINER_NAME}
 else
-  echo "### Container ${CONTAINER_NAME} does not exist, skipping stop/remove ###"
+  echo "### Container ${CONTAINER_NAME} does not exist, proceeding with creation. ###"
 fi
 
-echo "### Creating and starting a new container ${CONTAINER_NAME} ###"
+echo "### Creating and starting a new container ${CONTAINER_NAME} with --restart always ###"
 
 # Create and start a new container from the updated image
+# Key change: Added --restart always
 # Make sure the port mappings (-p ...) match your config.json
 docker run -d \
-  --name ${CONTAINER_NAME} \
+  --name "${CONTAINER_NAME}" \
   --network host \
-  -v ${CONFIG_PATH}:/etc/v2ray/config.json \
-  ${IMAGE_NAME} ${V2RAY_RUN_ARGS}
+  -v "${CONFIG_PATH}":/etc/v2ray/config.json \
+  --restart always \
+  "${IMAGE_NAME}" ${V2RAY_RUN_ARGS}
 
 echo "### Script finished ###"
 echo "Check container status with: docker ps"
 echo "Check container logs for errors with: docker logs ${CONTAINER_NAME}"
-
-# print the message the script finished
-echo "### Script finished ###"
-echo "Check container status with: docker ps"
